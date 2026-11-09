@@ -32,8 +32,8 @@ export const serverConfig = {
 } as const;
 
 export const setupConfig = {
-  adminUrl: required('POSTGRES_ADMIN_URL'),
-  databaseName: required('DATABASE_NAME'),
-  databaseRole: required('DATABASE_ROLE'),
-  databaseRolePassword: required('DATABASE_ROLE_PASSWORD'),
+  get adminUrl() { return required('POSTGRES_ADMIN_URL'); },
+  get databaseName() { return required('DATABASE_NAME'); },
+  get databaseRole() { return required('DATABASE_ROLE'); },
+  get databaseRolePassword() { return required('DATABASE_ROLE_PASSWORD'); },
 } as const;

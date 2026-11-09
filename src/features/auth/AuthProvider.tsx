@@ -29,6 +29,7 @@ type AuthContextValue = {
   register: (input: AuthInput & { displayName: string }) => Promise<void>;
   retryRestore: () => Promise<void>;
   signIn: (input: AuthInput) => Promise<void>;
+  startPortfolioDemo: () => Promise<void>;
   setCareSetup: (careSetup: CareSetup) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -136,6 +137,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setSession(response.account);
   }, [token]);
 
+  const startPortfolioDemo = useCallback(async () => {
+    const response = await apiRequest<AuthResponse>('/auth/portfolio-demo', { method: 'POST' });
+    await acceptAuthentication(response);
+  }, [acceptAuthentication]);
+
   const signOut = useCallback(async () => {
     const currentToken = token;
 
@@ -161,10 +167,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       register,
       retryRestore: restoreSession,
       signIn,
+      startPortfolioDemo,
       setCareSetup,
       signOut,
     }),
-    [register, restoreError, restoreSession, session, setCareSetup, signIn, signOut, status, token],
+    [register, restoreError, restoreSession, session, setCareSetup, signIn, startPortfolioDemo, signOut, status, token],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

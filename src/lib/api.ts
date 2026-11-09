@@ -6,7 +6,7 @@ import type { AssistantQueryRequest, AssistantQueryResponse } from '../features/
 
 const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const usesAutomaticDevelopmentApi = __DEV__ && (!configuredApiUrl || configuredApiUrl.toLowerCase() === 'auto');
-const apiUrl = resolveApiUrl({
+const apiUrl = Platform.OS === 'web' && process.env.EXPO_PUBLIC_PORTFOLIO_DEMO === 'true' ? '/api' : resolveApiUrl({
   configuredUrl: configuredApiUrl,
   developmentHostUri: Constants.expoConfig?.hostUri,
   isDevelopment: __DEV__,

@@ -731,6 +731,34 @@ export function createAppServer(
     const url = new URL(request.url || '/', 'http://localhost');
 
     try {
+      if (request.method === 'POST' && url.pathname === '/auth/portfolio-demo' && process.env.PORTFOLIO_DEMO === 'true') {
+        // Each visitor receives a separate account: existing RLS isolates their demo edits.
+        const session = newSession();
+        session.expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000);
+        const result = await pool.query<AccountRow>(
+          'SELECT * FROM app_api.register_account($1, $2, $3, $4, $5)',
+          [`demo-${randomBytes(12).toString('hex')}@example.test`, 'Portfolio Visitor', randomBytes(24).toString('hex'), session.hash, session.expiresAt],
+        );
+        request.headers.authorization = `Bearer ${session.token}`;
+        const account = await inAuthenticatedTransaction(pool, request, async (client) => {
+          const updated = await client.query<AccountRow>("SELECT * FROM app_api.set_account_care_setup('family')");
+          const patient = await client.query<{ id: string }>("SELECT * FROM app_api.create_patient_profile('Lola Rosa (Synthetic)', false)");
+          const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+          await client.query(`SELECT * FROM app_api.save_confirmed_medication(
+            $1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+          )`, [patient.rows[0].id, 'Demo Vitamin (Synthetic)', null, null, null, null, 1, 'tablet', 'tablet', 'by mouth', 'Dr. Demo', 'Fictional demonstration', 'Synthetic example only', 'Not medical guidance. Use sample data only.', 'manual', JSON.stringify([{
+            kind: 'exact', timeOfDay: '08:00', weekdays: [0, 1, 2, 3, 4, 5, 6], startOn: day, endOn: null, timeZone: 'Asia/Manila',
+          }])]);
+          return accountJson(updated.rows[0]);
+        });
+        sendJson(response, 201, { token: session.token, account });
+        return;
+      }
+
+      if (process.env.PORTFOLIO_DEMO === 'true' && request.method === 'POST' && ['/auth/register', '/auth/login'].includes(url.pathname)) {
+        throw new HttpError(403, 'Use Explore the original app to start an isolated sample-data session.');
+      }
+
       if (request.method === 'GET' && url.pathname === '/health') {
         await pool.query('SELECT 1');
         sendJson(response, 200, { ok: true });

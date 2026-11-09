@@ -37,7 +37,8 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
   const displayNameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
-  const { register, signIn } = useAuth();
+  const { register, signIn, startPortfolioDemo } = useAuth();
+  const portfolioDemo = process.env.EXPO_PUBLIC_PORTFOLIO_DEMO === 'true';
 
   const validate = () => {
     const problems: typeof fieldErrors = {};
@@ -93,6 +94,16 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
             {t(mode === 'register' ? 'auth.registerTitle' : 'auth.signInTitle')}
           </Text>
           <Text style={styles.body}>{t('auth.body')}</Text>
+          {portfolioDemo && <View style={{ gap: 12, padding: 16 }}>
+            <Text>Original Alaga app · Portfolio demo with fictional care data. Browser reminders and AI services are unavailable. Use sample information only.</Text>
+            <Pressable accessibilityRole="button" disabled={isSubmitting} onPress={async () => {
+              setSubmitting(true); setError(null);
+              try { await startPortfolioDemo(); } catch (failure) { setError(errorMessage(failure)); }
+              finally { setSubmitting(false); }
+            }} style={{ padding: 16, backgroundColor: colors.primary, borderRadius: 12 }}>
+              <Text style={{ color: '#fff', fontWeight: '700', textAlign: 'center' }}>{isSubmitting ? 'Opening demo…' : 'Explore the original app with sample data'}</Text>
+            </Pressable>
+          </View>}
 
           <AnimatedFeaturePills
             items={[
@@ -244,7 +255,7 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
           </Pressable>
 
           <Pressable
-            accessibilityLabel={t('auth.demoAccount')}
+            accessibilityLabel={portfolioDemo ? 'Explore the original app with sample data' : t('auth.demoAccount')}
             accessibilityRole="button"
             disabled={isSubmitting}
             onPress={async () => {
@@ -255,7 +266,8 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
               setFieldErrors({});
               setSubmitting(true);
               try {
-                await signIn({ email: 'maya@example.test', password: 'alaga-synthetic-only' });
+                if (portfolioDemo) await startPortfolioDemo();
+                else await signIn({ email: 'maya@example.test', password: 'alaga-synthetic-only' });
               } catch (err) {
                 setError(errorMessage(err));
               } finally {
@@ -269,7 +281,7 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
             ]}
           >
             <AppIcon color={colors.primary} name="user-round" size={18} />
-            <Text style={styles.demoButtonLabel}>{t('auth.demoAccount')}</Text>
+            <Text style={styles.demoButtonLabel}>{portfolioDemo ? 'Explore a new sample-data session' : t('auth.demoAccount')}</Text>
           </Pressable>
         </View>
       </ScrollView>
