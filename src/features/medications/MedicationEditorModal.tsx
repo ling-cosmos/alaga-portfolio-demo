@@ -170,6 +170,23 @@ function DateTimeField({ label, mode, value, onChange, minimumDate }: {
     setExpanded((current) => !current);
   };
 
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.field}>
+        <Text style={styles.label}>{label}</Text>
+        <input
+          aria-label={label}
+          type={mode}
+          value={value}
+          min={mode === 'date' && minimumDate ? valueFromDate(minimumDate, 'date') : undefined}
+          onInput={(event) => onChange(event.currentTarget.value)}
+          onChange={(event) => onChange(event.currentTarget.value)}
+          style={{ width: '100%', boxSizing: 'border-box', minHeight: 54, padding: '12px 16px', border: `1px solid ${colors.controlBorder}`, borderRadius: radii.md, background: colors.surface, color: colors.ink, font: 'inherit', fontSize: 16 }}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>

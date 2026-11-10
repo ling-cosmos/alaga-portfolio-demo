@@ -57,10 +57,10 @@ const SLIDES: SlideData[] = [
     id: 'slide-2',
     tag: 'Shared Care Circle',
     titleKey: 'onboarding.slide3Title',
-    defaultTitle: 'Cared for together, 100% private',
+    defaultTitle: 'Cared for together, with clear access',
     descKey: 'onboarding.slide3Desc',
     defaultDesc:
-      'Coordinate with family caregivers in one shared circle. All your health data remains strictly encrypted on your device.',
+      'Coordinate with family caregivers in one shared circle. Each care space is available to its approved members.',
     accentKey: 'primary',
   },
 ];

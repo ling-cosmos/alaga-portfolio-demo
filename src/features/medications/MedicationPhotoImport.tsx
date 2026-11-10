@@ -12,7 +12,8 @@ import type { Patient } from '../patients/types';
 import { imageMimeTypeFromBase64 } from './imageType';
 import type { MedicationOcrDraft } from './types';
 
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+const maxImageMegabytes = process.env.EXPO_PUBLIC_PORTFOLIO_DEMO === 'true' ? 2 : 4;
+const MAX_IMAGE_BYTES = maxImageMegabytes * 1024 * 1024;
 type SourceKind = MedicationOcrDraft['sourceKind'];
 
 export function MedicationPhotoImport({
@@ -42,6 +43,7 @@ export function MedicationPhotoImport({
         method: 'POST',
         token,
         body: input,
+        timeoutMs: 45_000,
       }),
     onSuccess: (response) => {
       const allDrafts = response.drafts && response.drafts.length > 0 ? response.drafts : [response.draft];
@@ -75,7 +77,7 @@ export function MedicationPhotoImport({
       }
       const decodedBytes = Math.floor(asset.base64.length * 0.75);
       if (decodedBytes > MAX_IMAGE_BYTES) {
-        setPickerError('Choose an image smaller than 4 MB after cropping.');
+        setPickerError(`Choose an image smaller than ${maxImageMegabytes} MB after cropping.`);
         return;
       }
 

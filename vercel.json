@@ -2,7 +2,13 @@
   "buildCommand": "npx expo export --platform web",
   "outputDirectory": "dist",
   "framework": null,
-  "functions": { "api/index.ts": { "maxDuration": 60 } },
+  "regions": ["sin1"],
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/{@tesseract.js-data/eng/4.0.0_best_int,tesseract.js/src,tesseract.js-core}/**"
+    }
+  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/((?!api/|_expo/|assets/|favicon.ico).*)", "destination": "/index.html" }

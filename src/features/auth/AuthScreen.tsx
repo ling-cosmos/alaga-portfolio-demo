@@ -103,6 +103,7 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
             }} style={{ padding: 16, backgroundColor: colors.primary, borderRadius: 12 }}>
               <Text style={{ color: '#fff', fontWeight: '700', textAlign: 'center' }}>{isSubmitting ? 'Opening demo…' : 'Explore the original app with sample data'}</Text>
             </Pressable>
+            {error && <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>}
           </View>}
 
           <AnimatedFeaturePills
@@ -148,7 +149,7 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
           ) : null}
         </View>
 
-        <View style={styles.formCard}>
+        {!portfolioDemo && <View style={styles.formCard}>
           <View style={styles.formHeading}>
             <Text accessibilityRole="header" style={styles.formTitle}>
               {t(mode === 'register' ? 'auth.createAccount' : 'auth.signIn')}
@@ -283,7 +284,7 @@ export function AuthScreen({ onOpenWelcomeStory }: Props = {}) {
             <AppIcon color={colors.primary} name="user-round" size={18} />
             <Text style={styles.demoButtonLabel}>{portfolioDemo ? 'Explore a new sample-data session' : t('auth.demoAccount')}</Text>
           </Pressable>
-        </View>
+        </View>}
       </ScrollView>
     </KeyboardAvoidingView>
   );

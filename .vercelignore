@@ -6,3 +6,5 @@ server/tests/
 node_modules/
 .expo/
 dist/
+.tmp/
+.cache/

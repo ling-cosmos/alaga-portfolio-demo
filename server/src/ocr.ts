@@ -1,5 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { createWorker, OEM, PSM } from 'tesseract.js';
 
@@ -53,11 +54,11 @@ function normalizedTime(hours: number, minutes: number, meridiem?: string) {
 
 function explicitTimes(text: string) {
   const times = new Set<string>();
-  const clockPattern = /\b([01]?\d|2[0-3]):([0-5]\d)\b/g;
+  const clockPattern = /\b([01]?\d|2[0-3]):([0-5]\d)\b\s*(a\.?m\.?|p\.?m\.?)?/gi;
   const meridiemPattern = /\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(a\.?m\.?|p\.?m\.?)\b/gi;
 
   for (const match of text.matchAll(clockPattern)) {
-    times.add(normalizedTime(Number(match[1]), Number(match[2])));
+    times.add(normalizedTime(Number(match[1]), Number(match[2]), match[3]));
   }
   for (const match of text.matchAll(meridiemPattern)) {
     times.add(normalizedTime(Number(match[1]), Number(match[2] || 0), match[3]));
@@ -289,11 +290,29 @@ export function splitPrescriptionBlocks(rawText: string): string[] {
     .filter(Boolean);
 
   if (doubleNewlineBlocks.length >= 2) {
-    const medLikeBlocks = doubleNewlineBlocks.filter((b) =>
-      /\b(\d+(?:\.\d+)?\s*(?:mcg|mg|g|ml)|take|tablet|capsule|tableta|kapsula|tab)\b/i.test(b),
-    );
-    if (medLikeBlocks.length >= 2) {
-      return doubleNewlineBlocks;
+    const startsMedicine = (block: string) => {
+      const firstLine = block.split('\n')[0].trim();
+      return !INTAKE_OR_DOSE_LINE.test(firstLine)
+        && !NAME_NOISE.test(firstLine)
+        && !NON_MEDICINE_BANNER.test(firstLine)
+        && !STRENGTH_ONLY_LINE.test(firstLine)
+        && !DISPENSE_OR_FORM_LINE.test(firstLine)
+        && /\b(\d+(?:\.\d+)?\s*(?:mcg|mg|g|ml)|tablets?|capsules?|tableta|kapsula|tab)\b/i.test(block);
+    };
+    if (doubleNewlineBlocks.filter(startsMedicine).length >= 2) {
+      const blocks: string[] = [];
+      let preamble = '';
+      for (const block of doubleNewlineBlocks) {
+        if (startsMedicine(block)) {
+          blocks.push(preamble ? `${preamble}\n\n${block}` : block);
+          preamble = '';
+        } else if (blocks.length) {
+          blocks[blocks.length - 1] += `\n\n${block}`;
+        } else {
+          preamble += `${preamble ? '\n\n' : ''}${block}`;
+        }
+      }
+      return blocks;
     }
   }
 
@@ -502,9 +521,19 @@ export async function recognizeMedicationImage(
   const preprocessedImage = await preprocessOcrImage(image);
 
   // 3. Local Tesseract LSTM OCR on pre-processed image
-  const cachePath = resolve(process.cwd(), '.cache', 'tesseract');
+  const cachePath = process.env.VERCEL === '1'
+    ? resolve(tmpdir(), 'alaga-ocr')
+    : resolve(process.cwd(), '.cache', 'tesseract');
   await mkdir(cachePath, { recursive: true });
-  const worker = await createWorker('eng', OEM.LSTM_ONLY, { cachePath });
+  let lastStatus = '';
+  const worker = await createWorker('eng', OEM.LSTM_ONLY, {
+    cachePath,
+    langPath: resolve(process.cwd(), 'node_modules', '@tesseract.js-data', 'eng', '4.0.0_best_int'),
+    logger: ({ status }) => {
+      if (process.env.VERCEL === '1' && status !== lastStatus) console.info(`Alaga OCR: ${status}`);
+      lastStatus = status;
+    },
+  });
 
   try {
     await worker.setParameters({

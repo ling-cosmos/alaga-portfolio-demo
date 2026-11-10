@@ -18,6 +18,7 @@ type ApiRequestOptions = {
   body?: unknown;
   method?: 'GET' | 'POST' | 'PUT';
   token?: string | null;
+  timeoutMs?: number;
 };
 
 export class ApiError extends Error {
@@ -45,7 +46,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
   let response: Response;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
 
   try {
     response = await fetch(`${apiUrl}${path}`, {

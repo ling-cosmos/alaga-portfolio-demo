@@ -46,6 +46,20 @@ test('OCR drafts never turn vague frequency wording into clock times', () => {
   assert.equal(draft.originalInstructions, 'Synthetic medicine\nTake one tablet three times daily after meals');
 });
 
+test('OCR keeps blank-line-separated intake instructions with their medicine', () => {
+  const label = 'Gardenia Tablets\n5 mg\n\nTake 1 tablet at 8:00 AM and 8:00 PM.\n\nReview every OCR field before confirming.';
+  const drafts = medicationDraftsFromText(label, 'label_photo', 95);
+  assert.equal(drafts.length, 1);
+  assert.equal(drafts[0].rawText, label);
+  assert.deepEqual(drafts[0].exactTimes, ['08:00', '20:00']);
+
+  const prescription = 'Amlodipine 5 mg\n\nTake 1 tablet at 8:00 AM.\n\nMetformin 500 mg\n\nTake 1 tablet at 8:00 PM.';
+  const medicines = medicationDraftsFromText(prescription, 'timetable_photo', 95);
+  assert.equal(medicines.length, 2);
+  assert.deepEqual(medicines[0].exactTimes, ['08:00']);
+  assert.deepEqual(medicines[1].exactTimes, ['20:00']);
+});
+
 test('OCR drafts correctly parse meridiem tokens with periods like a.m. and p.m.', () => {
   const rawText = `Synthetic Tablet\n5 mg\nTake 1 tablet at 8:00 a.m. and 8:00 p.m.`;
   const draft = medicationDraftFromText(rawText, 'label_photo', 90);

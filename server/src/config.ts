@@ -25,7 +25,7 @@ const numberFromEnvironment = (name: string, fallback: number) => {
 };
 
 export const serverConfig = {
-  databaseUrl: required('DATABASE_URL'),
+  databaseUrl: process.env.ALAGA_DATABASE_URL?.trim() || required('DATABASE_URL'),
   host: process.env.SERVER_HOST?.trim() || '127.0.0.1',
   port: numberFromEnvironment('SERVER_PORT', 4000),
   corsOrigin: process.env.CORS_ORIGIN?.trim() || '*',
